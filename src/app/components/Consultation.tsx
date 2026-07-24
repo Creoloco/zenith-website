@@ -5,6 +5,28 @@ import { MapPin, Calendar, DollarSign } from 'lucide-react';
 export function Consultation() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStatus('sending');
+    const form = e.currentTarget;
+    try {
+      const res = await fetch('https://formspree.io/f/xkodqlqj', {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        setStatus('success');
+        form.reset();
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -113,7 +135,7 @@ export function Consultation() {
           transition={{ duration: 0.8, delay: 0.5 }}
           className="bg-card border border-border rounded-sm p-8 md:p-12"
         >
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label htmlFor="name" className="block text-sm mb-2">
@@ -122,6 +144,8 @@ export function Consultation() {
                 <input
                   type="text"
                   id="name"
+                  name="name"
+                  required
                   className="w-full px-4 py-3 bg-input-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                   placeholder="John Doe"
                 />
@@ -134,6 +158,8 @@ export function Consultation() {
                 <input
                   type="email"
                   id="email"
+                  name="email"
+                  required
                   className="w-full px-4 py-3 bg-input-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                   placeholder="john@company.com"
                 />
@@ -148,6 +174,7 @@ export function Consultation() {
                 <input
                   type="text"
                   id="company"
+                  name="company"
                   className="w-full px-4 py-3 bg-input-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                   placeholder="Your Company"
                 />
@@ -159,6 +186,7 @@ export function Consultation() {
                 </label>
                 <select
                   id="industry"
+                  name="industry"
                   className="w-full px-4 py-3 bg-input-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                 >
                   <option>Select an industry</option>
@@ -178,6 +206,8 @@ export function Consultation() {
               </label>
               <textarea
                 id="message"
+                name="message"
+                required
                 rows={4}
                 className="w-full px-4 py-3 bg-input-background border border-border rounded-sm focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all resize-none"
                 placeholder="Describe your challenges and objectives..."
@@ -190,8 +220,15 @@ export function Consultation() {
               type="submit"
               className="w-full md:w-auto px-12 py-4 bg-primary text-primary-foreground rounded-sm transition-all duration-300 hover:bg-primary/90"
             >
-              Request Consultation
+              {status === 'sending' ? 'Sending…' : 'Request Consultation'}
             </motion.button>
+
+            {status === 'success' && (
+              <p className="text-sm text-accent">Thank you! Your request has been sent. We'll be in touch shortly.</p>
+            )}
+            {status === 'error' && (
+              <p className="text-sm text-red-500">Something went wrong. Please try again or email us directly.</p>
+            )}
           </form>
         </motion.div>
       </div>
